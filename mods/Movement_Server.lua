@@ -6,43 +6,7 @@ local Movement = {
     Players = game:GetService("Players"),
     UserInputService = game:GetService("UserInputService"),
     Workspace = workspace,
-    ReplicatedStorage = game:GetService("ReplicatedStorage"),
 }
-
--- Get server remotes
-local Remotes = Movement.ReplicatedStorage:WaitForChild("CheatRemotes", 5)
-local ActionRequest = Remotes and Remotes:WaitForChild("ActionRequest")
-
-function Movement:RequestCheat(feature, value, callback)
-    if not ActionRequest then
-        if callback then callback(true, value) end
-        return true
-    end
-
-    local requestData = {
-        action = "cheat",
-        feature = feature,
-        value = value,
-        timestamp = tick(),
-    }
-
-    local success, result = pcall(function()
-        return ActionRequest:InvokeServer(requestData)
-    end)
-
-    if not success then
-        if callback then callback(false, result) end
-        return false
-    end
-
-    if not result.success then
-        if callback then callback(false, result.error) end
-        return false
-    end
-
-    if callback then callback(true, value) end
-    return true
-end
 
 function Movement:Init(Library, Tab)
     -- Speed
@@ -52,12 +16,8 @@ function Movement:Init(Library, Tab)
         Text = "Speed Hack",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("SpeedHack", Value, function(success)
-                if success then
-                    Movement.Features.SpeedHack = Value
-                    Movement:UpdateSpeed()
-                end
-            end)
+            Movement.Features.SpeedHack = Value
+            Movement:UpdateSpeed()
         end,
     })
 
@@ -68,11 +28,7 @@ function Movement:Init(Library, Tab)
         Max = 10,
         Rounding = 1,
         Callback = function(Value)
-            Movement:RequestCheat("SpeedValue", Value, function(success)
-                if success then
-                    Movement.Features.SpeedValue = Value
-                end
-            end)
+            Movement.Features.SpeedValue = Value
         end,
     })
 
@@ -80,11 +36,7 @@ function Movement:Init(Library, Tab)
         Text = "Speed on Keybind",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("SpeedKeybind", Value, function(success)
-                if success then
-                    Movement.Features.SpeedKeybind = Value
-                end
-            end)
+            Movement.Features.SpeedKeybind = Value
         end,
     })
 
@@ -105,12 +57,8 @@ function Movement:Init(Library, Tab)
         Text = "Fly",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("FlyHack", Value, function(success)
-                if success then
-                    Movement.Features.FlyHack = Value
-                    Movement:UpdateFly()
-                end
-            end)
+            Movement.Features.FlyHack = Value
+            Movement:UpdateFly()
         end,
     })
 
@@ -119,12 +67,9 @@ function Movement:Init(Library, Tab)
         Default = "F",
         Callback = function(Value, Pressed)
             if Pressed then
-                Movement:RequestCheat("FlyHack", not Movement.Features.FlyHack, function(success)
-                    if success then
-                        Movement.Features.FlyHack = not Movement.Features.FlyHack
-                        Movement:UpdateFly()
-                    end
-                end)
+                Movement.Features.FlyHack = not Movement.Features.FlyHack
+                Movement:UpdateFly()
+                Library:Notify("Fly " .. (Movement.Features.FlyHack and "Enabled" or "Disabled"), 2)
             end
         end,
     })
@@ -136,11 +81,7 @@ function Movement:Init(Library, Tab)
         Max = 500,
         Rounding = 0,
         Callback = function(Value)
-            Movement:RequestCheat("FlySpeed", Value, function(success)
-                if success then
-                    Movement.Features.FlySpeed = Value
-                end
-            end)
+            Movement.Features.FlySpeed = Value
         end,
     })
 
@@ -148,11 +89,7 @@ function Movement:Init(Library, Tab)
         Text = "Noclip while Flying",
         Default = true,
         Callback = function(Value)
-            Movement:RequestCheat("FlyNoclip", Value, function(success)
-                if success then
-                    Movement.Features.FlyNoclip = Value
-                end
-            end)
+            Movement.Features.FlyNoclip = Value
         end,
     })
 
@@ -163,12 +100,8 @@ function Movement:Init(Library, Tab)
         Text = "Infinite Jump",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("InfiniteJump", Value, function(success)
-                if success then
-                    Movement.Features.InfiniteJump = Value
-                    Movement:UpdateInfiniteJump()
-                end
-            end)
+            Movement.Features.InfiniteJump = Value
+            Movement:UpdateInfiniteJump()
         end,
     })
 
@@ -179,12 +112,8 @@ function Movement:Init(Library, Tab)
         Max = 200,
         Rounding = 0,
         Callback = function(Value)
-            Movement:RequestCheat("JumpPower", Value, function(success)
-                if success then
-                    Movement.Features.JumpPower = Value
-                    Movement:UpdateJumpPower()
-                end
-            end)
+            Movement.Features.JumpPower = Value
+            Movement:UpdateJumpPower()
         end,
     })
 
@@ -192,11 +121,7 @@ function Movement:Init(Library, Tab)
         Text = "Auto Jump",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("AutoJump", Value, function(success)
-                if success then
-                    Movement.Features.AutoJump = Value
-                end
-            end)
+            Movement.Features.AutoJump = Value
         end,
     })
 
@@ -207,12 +132,8 @@ function Movement:Init(Library, Tab)
         Text = "Noclip",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("Noclip", Value, function(success)
-                if success then
-                    Movement.Features.Noclip = Value
-                    Movement:UpdateNoclip()
-                end
-            end)
+            Movement.Features.Noclip = Value
+            Movement:UpdateNoclip()
         end,
     })
 
@@ -221,12 +142,9 @@ function Movement:Init(Library, Tab)
         Default = "N",
         Callback = function(Value, Pressed)
             if Pressed then
-                Movement:RequestCheat("Noclip", not Movement.Features.Noclip, function(success)
-                    if success then
-                        Movement.Features.Noclip = not Movement.Features.Noclip
-                        Movement:UpdateNoclip()
-                    end
-                end)
+                Movement.Features.Noclip = not Movement.Features.Noclip
+                Movement:UpdateNoclip()
+                Library:Notify("Noclip " .. (Movement.Features.Noclip and "Enabled" or "Disabled"), 2)
             end
         end,
     })
@@ -238,11 +156,7 @@ function Movement:Init(Library, Tab)
         Text = "Bunny Hop",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("BHop", Value, function(success)
-                if success then
-                    Movement.Features.BHop = Value
-                end
-            end)
+            Movement.Features.BHop = Value
         end,
     })
 
@@ -250,11 +164,7 @@ function Movement:Init(Library, Tab)
         Text = "Auto Strafe",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("AutoStrafe", Value, function(success)
-                if success then
-                    Movement.Features.AutoStrafe = Value
-                end
-            end)
+            Movement.Features.AutoStrafe = Value
         end,
     })
 
@@ -262,12 +172,8 @@ function Movement:Init(Library, Tab)
         Text = "Anti AFK",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("AntiAfk", Value, function(success)
-                if success then
-                    Movement.Features.AntiAfk = Value
-                    Movement:UpdateAntiAfk()
-                end
-            end)
+            Movement.Features.AntiAfk = Value
+            Movement:UpdateAntiAfk()
         end,
     })
 
@@ -275,11 +181,7 @@ function Movement:Init(Library, Tab)
         Text = "Walk on Water",
         Default = false,
         Callback = function(Value)
-            Movement:RequestCheat("WalkOnWater", Value, function(success)
-                if success then
-                    Movement.Features.WalkOnWater = Value
-                end
-            end)
+            Movement.Features.WalkOnWater = Value
         end,
     })
 
@@ -287,36 +189,30 @@ function Movement:Init(Library, Tab)
     Movement.Features.SpeedValue = 2
     Movement.Features.FlySpeed = 50
     Movement.Features.JumpPower = 50
+    Movement.Features.SpeedActive = false
 end
 
 function Movement:UpdateSpeed()
     if Movement.Features.SpeedHack then
         if not Movement.SpeedConnection then
             Movement.SpeedConnection = Movement.RunService.Heartbeat:Connect(function()
-                local Character = Movement.Players.LocalPlayer.Character
-                if Character then
-                    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-                    local HRP = Character:FindFirstChild("HumanoidRootPart")
-
-                    if Humanoid and HRP then
-                        local Speed = Movement.Features.SpeedValue
+                local character = Movement.Players.LocalPlayer.Character
+                if character then
+                    local humanoid = character:FindFirstChildOfClass("Humanoid")
+                    local hrp = character:FindFirstChild("HumanoidRootPart")
+                    if humanoid and hrp then
+                        local speed = Movement.Features.SpeedValue
                         if Movement.Features.SpeedKeybind and not Movement.Features.SpeedActive then
-                            Speed = 1
+                            speed = 1
                         end
-
-                        local MoveDirection = Vector3.new(
-                            Movement.UserInputService:IsKeyDown(Enum.KeyCode.D) and 1 or (Movement.UserInputService:IsKeyDown(Enum.KeyCode.A) and -1 or 0),
+                        local moveDir = Vector3.new(
+                            (Movement.UserInputService:IsKeyDown(Enum.KeyCode.D) and 1 or 0) - (Movement.UserInputService:IsKeyDown(Enum.KeyCode.A) and 1 or 0),
                             0,
-                            Movement.UserInputService:IsKeyDown(Enum.KeyCode.S) and 1 or (Movement.UserInputService:IsKeyDown(Enum.KeyCode.W) and -1 or 0)
+                            (Movement.UserInputService:IsKeyDown(Enum.KeyCode.S) and 1 or 0) - (Movement.UserInputService:IsKeyDown(Enum.KeyCode.W) and 1 or 0)
                         )
-
-                        if MoveDirection.Magnitude > 0 then
-                            MoveDirection = MoveDirection.Unit
-                            HRP.Velocity = Vector3.new(
-                                MoveDirection.X * Humanoid.WalkSpeed * Speed,
-                                HRP.Velocity.Y,
-                                MoveDirection.Z * Humanoid.WalkSpeed * Speed
-                            )
+                        if moveDir.Magnitude > 0 then
+                            moveDir = moveDir.Unit
+                            hrp.Velocity = Vector3.new(moveDir.X * humanoid.WalkSpeed * speed, hrp.Velocity.Y, moveDir.Z * humanoid.WalkSpeed * speed)
                         end
                     end
                 end
@@ -334,46 +230,25 @@ function Movement:UpdateFly()
     if Movement.Features.FlyHack then
         if not Movement.FlyConnection then
             Movement.FlyConnection = Movement.RunService.RenderStepped:Connect(function()
-                local Character = Movement.Players.LocalPlayer.Character
-                if Character then
-                    local HRP = Character:FindFirstChild("HumanoidRootPart")
-                    if HRP then
-                        local Camera = Movement.Workspace.CurrentCamera
-                        local Speed = Movement.Features.FlySpeed
-
-                        local MoveDirection = Vector3.new()
-
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                            MoveDirection = MoveDirection + Camera.CFrame.LookVector
-                        end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                            MoveDirection = MoveDirection - Camera.CFrame.LookVector
-                        end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                            MoveDirection = MoveDirection - Camera.CFrame.RightVector
-                        end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                            MoveDirection = MoveDirection + Camera.CFrame.RightVector
-                        end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                            MoveDirection = MoveDirection + Vector3.new(0, 1, 0)
-                        end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                            MoveDirection = MoveDirection - Vector3.new(0, 1, 0)
-                        end
-
-                        if MoveDirection.Magnitude > 0 then
-                            MoveDirection = MoveDirection.Unit * Speed
-                        end
-
-                        HRP.Velocity = MoveDirection
-                        HRP.Anchored = false
-
+                local character = Movement.Players.LocalPlayer.Character
+                if character then
+                    local hrp = character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local camera = Movement.Workspace.CurrentCamera
+                        local speed = Movement.Features.FlySpeed
+                        local moveDir = Vector3.new()
+                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camera.CFrame.LookVector end
+                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camera.CFrame.LookVector end
+                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camera.CFrame.RightVector end
+                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camera.CFrame.RightVector end
+                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+                        if moveDir.Magnitude > 0 then moveDir = moveDir.Unit * speed end
+                        hrp.Velocity = moveDir
+                        hrp.Anchored = false
                         if Movement.Features.FlyNoclip then
-                            for _, Part in ipairs(Character:GetDescendants()) do
-                                if Part:IsA("BasePart") then
-                                    Part.CanCollide = false
-                                end
+                            for _, part in ipairs(character:GetDescendants()) do
+                                if part:IsA("BasePart") then part.CanCollide = false end
                             end
                         end
                     end
@@ -385,13 +260,10 @@ function Movement:UpdateFly()
             Movement.FlyConnection:Disconnect()
             Movement.FlyConnection = nil
         end
-
-        local Character = Movement.Players.LocalPlayer.Character
-        if Character then
-            for _, Part in ipairs(Character:GetDescendants()) do
-                if Part:IsA("BasePart") then
-                    Part.CanCollide = true
-                end
+        local character = Movement.Players.LocalPlayer.Character
+        if character then
+            for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = true end
             end
         end
     end
@@ -400,13 +272,13 @@ end
 function Movement:UpdateInfiniteJump()
     if Movement.Features.InfiniteJump then
         if not Movement.JumpConnection then
-            Movement.JumpConnection = Movement.UserInputService.InputBegan:Connect(function(Input, GameProcessed)
-                if not GameProcessed and Input.KeyCode == Enum.KeyCode.Space then
-                    local Character = Movement.Players.LocalPlayer.Character
-                    if Character then
-                        local HRP = Character:FindFirstChild("HumanoidRootPart")
-                        if HRP then
-                            HRP.Velocity = Vector3.new(HRP.Velocity.X, Movement.Features.JumpPower or 50, HRP.Velocity.Z)
+            Movement.JumpConnection = Movement.UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if not gameProcessed and input.KeyCode == Enum.KeyCode.Space then
+                    local character = Movement.Players.LocalPlayer.Character
+                    if character then
+                        local hrp = character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            hrp.Velocity = Vector3.new(hrp.Velocity.X, Movement.Features.JumpPower or 50, hrp.Velocity.Z)
                         end
                     end
                 end
@@ -421,11 +293,11 @@ function Movement:UpdateInfiniteJump()
 end
 
 function Movement:UpdateJumpPower()
-    local Character = Movement.Players.LocalPlayer.Character
-    if Character then
-        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-        if Humanoid then
-            Humanoid.JumpPower = Movement.Features.JumpPower
+    local character = Movement.Players.LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.JumpPower = Movement.Features.JumpPower
         end
     end
 end
@@ -434,12 +306,10 @@ function Movement:UpdateNoclip()
     if Movement.Features.Noclip then
         if not Movement.NoclipConnection then
             Movement.NoclipConnection = Movement.RunService.Stepped:Connect(function()
-                local Character = Movement.Players.LocalPlayer.Character
-                if Character then
-                    for _, Part in ipairs(Character:GetDescendants()) do
-                        if Part:IsA("BasePart") then
-                            Part.CanCollide = false
-                        end
+                local character = Movement.Players.LocalPlayer.Character
+                if character then
+                    for _, part in ipairs(character:GetDescendants()) do
+                        if part:IsA("BasePart") then part.CanCollide = false end
                     end
                 end
             end)
@@ -449,13 +319,10 @@ function Movement:UpdateNoclip()
             Movement.NoclipConnection:Disconnect()
             Movement.NoclipConnection = nil
         end
-
-        local Character = Movement.Players.LocalPlayer.Character
-        if Character then
-            for _, Part in ipairs(Character:GetDescendants()) do
-                if Part:IsA("BasePart") then
-                    Part.CanCollide = true
-                end
+        local character = Movement.Players.LocalPlayer.Character
+        if character then
+            for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = true end
             end
         end
     end
@@ -463,11 +330,11 @@ end
 
 function Movement:UpdateAntiAfk()
     if Movement.Features.AntiAfk then
-        local VirtualUser = game:GetService("VirtualUser")
+        local virtualUser = game:GetService("VirtualUser")
         if not Movement.AntiAfkConnection then
             Movement.AntiAfkConnection = Movement.Players.LocalPlayer.Idled:Connect(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
+                virtualUser:CaptureController()
+                virtualUser:ClickButton2(Vector2.new())
             end)
         end
     else
@@ -484,19 +351,15 @@ function Movement:Cleanup()
     if Movement.JumpConnection then Movement.JumpConnection:Disconnect() end
     if Movement.NoclipConnection then Movement.NoclipConnection:Disconnect() end
     if Movement.AntiAfkConnection then Movement.AntiAfkConnection:Disconnect() end
-
     Movement.SpeedConnection = nil
     Movement.FlyConnection = nil
     Movement.JumpConnection = nil
     Movement.NoclipConnection = nil
     Movement.AntiAfkConnection = nil
-
-    local Character = Movement.Players.LocalPlayer.Character
-    if Character then
-        for _, Part in ipairs(Character:GetDescendants()) do
-            if Part:IsA("BasePart") then
-                Part.CanCollide = true
-            end
+    local character = Movement.Players.LocalPlayer.Character
+    if character then
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = true end
         end
     end
 end
