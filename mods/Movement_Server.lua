@@ -1,6 +1,3 @@
--- // Movement.lua (Fixed Version)
--- // All functions implemented and working
-
 local Movement = {
     Enabled = false,
     Features = {},
