@@ -5,61 +5,19 @@ local Combat = {
     RunService = game:GetService("RunService"),
     Players = game:GetService("Players"),
     UserInputService = game:GetService("UserInputService"),
-    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    Camera = workspace.CurrentCamera,
 }
 
--- Get server remotes
-local Remotes = Combat.ReplicatedStorage:WaitForChild("CheatRemotes", 5)
-local ActionRequest = Remotes and Remotes:WaitForChild("ActionRequest")
-
--- Server request wrapper for cheat actions
-function Combat:RequestCheat(feature, value, callback)
-    if not ActionRequest then
-        if callback then callback(true, value) end
-        return true
-    end
-
-    local requestData = {
-        action = "cheat",
-        feature = feature,
-        value = value,
-        timestamp = tick(),
-    }
-
-    local success, result = pcall(function()
-        return ActionRequest:InvokeServer(requestData)
-    end)
-
-    if not success then
-        warn("Cheat request failed: " .. tostring(result))
-        if callback then callback(false, result) end
-        return false
-    end
-
-    if not result.success then
-        warn("Server denied cheat: " .. tostring(result.error))
-        if callback then callback(false, result.error) end
-        return false
-    end
-
-    if callback then callback(true, value) end
-    return true
-end
-
 function Combat:Init(Library, Tab)
-    local Groupbox = Tab:AddLeftGroupbox("Combat")
+    -- Combat Groupbox
+    local Groupbox = Tab:AddLeftGroupbox("Aimbot")
 
-    -- Silent Aim
     Groupbox:AddToggle("SilentAim", {
         Text = "Silent Aim",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("SilentAim", Value, function(success)
-                if success then
-                    Combat.Features.SilentAim = Value
-                    Combat:UpdateSilentAim()
-                end
-            end)
+            Combat.Features.SilentAim = Value
+            Combat:UpdateSilentAim()
         end,
     })
 
@@ -70,24 +28,16 @@ function Combat:Init(Library, Tab)
         Max = 500,
         Rounding = 0,
         Callback = function(Value)
-            Combat:RequestCheat("AimFOV", Value, function(success)
-                if success then
-                    Combat.Features.AimFOV = Value
-                end
-            end)
+            Combat.Features.AimFOV = Value
         end,
     })
 
     Groupbox:AddDropdown("AimPart", {
         Text = "Aim Part",
         Values = {"Head", "Torso", "HumanoidRootPart", "Random"},
-        Default = 1,
+        Default = "Head",
         Callback = function(Value)
-            Combat:RequestCheat("AimPart", Value, function(success)
-                if success then
-                    Combat.Features.AimPart = Value
-                end
-            end)
+            Combat.Features.AimPart = Value
         end,
     })
 
@@ -95,25 +45,16 @@ function Combat:Init(Library, Tab)
         Text = "Wall Check",
         Default = true,
         Callback = function(Value)
-            Combat:RequestCheat("WallCheck", Value, function(success)
-                if success then
-                    Combat.Features.WallCheck = Value
-                end
-            end)
+            Combat.Features.WallCheck = Value
         end,
     })
 
-    -- Trigger Bot
     Groupbox:AddToggle("TriggerBot", {
         Text = "Trigger Bot",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("TriggerBot", Value, function(success)
-                if success then
-                    Combat.Features.TriggerBot = Value
-                    Combat:UpdateTriggerBot()
-                end
-            end)
+            Combat.Features.TriggerBot = Value
+            Combat:UpdateTriggerBot()
         end,
     })
 
@@ -124,27 +65,19 @@ function Combat:Init(Library, Tab)
         Max = 500,
         Rounding = 0,
         Callback = function(Value)
-            Combat:RequestCheat("TriggerDelay", Value, function(success)
-                if success then
-                    Combat.Features.TriggerDelay = Value / 1000
-                end
-            end)
+            Combat.Features.TriggerDelay = Value / 1000
         end,
     })
 
-    -- Aimlock
+    -- Aimlock Groupbox
     local RightGroupbox = Tab:AddRightGroupbox("Aimlock")
 
     RightGroupbox:AddToggle("Aimlock", {
         Text = "Aimlock",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("Aimlock", Value, function(success)
-                if success then
-                    Combat.Features.Aimlock = Value
-                    Combat:UpdateAimlock()
-                end
-            end)
+            Combat.Features.Aimlock = Value
+            Combat:UpdateAimlock()
         end,
     })
 
@@ -153,11 +86,8 @@ function Combat:Init(Library, Tab)
         Default = "Q",
         Callback = function(Value, Pressed)
             if Pressed then
-                Combat:RequestCheat("AimlockActive", not Combat.Features.AimlockActive, function(success)
-                    if success then
-                        Combat.Features.AimlockActive = not Combat.Features.AimlockActive
-                    end
-                end)
+                Combat.Features.AimlockActive = not Combat.Features.AimlockActive
+                Library:Notify("Aimlock " .. (Combat.Features.AimlockActive and "Enabled" or "Disabled"), 2)
             end
         end,
     })
@@ -169,11 +99,7 @@ function Combat:Init(Library, Tab)
         Max = 1,
         Rounding = 2,
         Callback = function(Value)
-            Combat:RequestCheat("AimlockSmoothness", Value, function(success)
-                if success then
-                    Combat.Features.AimlockSmoothness = Value
-                end
-            end)
+            Combat.Features.AimlockSmoothness = Value
         end,
     })
 
@@ -181,24 +107,16 @@ function Combat:Init(Library, Tab)
         Text = "Team Check",
         Default = true,
         Callback = function(Value)
-            Combat:RequestCheat("AimlockTeamCheck", Value, function(success)
-                if success then
-                    Combat.Features.AimlockTeamCheck = Value
-                end
-            end)
+            Combat.Features.AimlockTeamCheck = Value
         end,
     })
 
-    -- Rapid Fire
     RightGroupbox:AddToggle("RapidFire", {
         Text = "Rapid Fire",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("RapidFire", Value, function(success)
-                if success then
-                    Combat.Features.RapidFire = Value
-                end
-            end)
+            Combat.Features.RapidFire = Value
+            Combat:UpdateRapidFire()
         end,
     })
 
@@ -209,26 +127,19 @@ function Combat:Init(Library, Tab)
         Max = 10,
         Rounding = 1,
         Callback = function(Value)
-            Combat:RequestCheat("FireRate", Value, function(success)
-                if success then
-                    Combat.Features.FireRate = Value
-                end
-            end)
+            Combat.Features.FireRate = Value
         end,
     })
 
-    -- ESP
+    -- ESP Groupbox
     local ESPGroupbox = Tab:AddLeftGroupbox("ESP")
 
     ESPGroupbox:AddToggle("BoxESP", {
         Text = "Box ESP",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("BoxESP", Value, function(success)
-                if success then
-                    Combat.Features.BoxESP = Value
-                end
-            end)
+            Combat.Features.BoxESP = Value
+            Combat:UpdateESP()
         end,
     })
 
@@ -236,11 +147,8 @@ function Combat:Init(Library, Tab)
         Text = "Name ESP",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("NameESP", Value, function(success)
-                if success then
-                    Combat.Features.NameESP = Value
-                end
-            end)
+            Combat.Features.NameESP = Value
+            Combat:UpdateESP()
         end,
     })
 
@@ -248,11 +156,8 @@ function Combat:Init(Library, Tab)
         Text = "Health ESP",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("HealthESP", Value, function(success)
-                if success then
-                    Combat.Features.HealthESP = Value
-                end
-            end)
+            Combat.Features.HealthESP = Value
+            Combat:UpdateESP()
         end,
     })
 
@@ -260,11 +165,8 @@ function Combat:Init(Library, Tab)
         Text = "Tracer ESP",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("TracerESP", Value, function(success)
-                if success then
-                    Combat.Features.TracerESP = Value
-                end
-            end)
+            Combat.Features.TracerESP = Value
+            Combat:UpdateESP()
         end,
     })
 
@@ -272,11 +174,7 @@ function Combat:Init(Library, Tab)
         Text = "Show Teammates",
         Default = false,
         Callback = function(Value)
-            Combat:RequestCheat("TeamESP", Value, function(success)
-                if success then
-                    Combat.Features.TeamESP = Value
-                end
-            end)
+            Combat.Features.TeamESP = Value
         end,
     })
 
@@ -288,88 +186,238 @@ function Combat:Init(Library, Tab)
     Combat.Features.AimlockSmoothness = 0.1
     Combat.Features.AimlockTeamCheck = true
     Combat.Features.FireRate = 2
+    Combat.Features.AimlockActive = false
+    Combat.ESPObjects = {}
 end
 
+-- Silent Aim
 function Combat:UpdateSilentAim()
     if Combat.Features.SilentAim then
-        -- Server-approved silent aim implementation
+        if not Combat.SilentAimConnection then
+            Combat.SilentAimConnection = Combat.RunService.RenderStepped:Connect(function()
+                local target = Combat:GetClosestPlayer(Combat.Features.AimFOV, Combat.Features.AimPart, Combat.Features.WallCheck)
+                if target and target.Character then
+                    local part = target.Character:FindFirstChild(Combat.Features.AimPart) or target.Character:FindFirstChild("Head")
+                    if part then
+                        local screenPos = Combat.Camera:WorldToViewportPoint(part.Position)
+                        -- Silent aim implementation would modify mouse/raycast here
+                    end
+                end
+            end)
+        end
     else
-        -- Disable
+        if Combat.SilentAimConnection then
+            Combat.SilentAimConnection:Disconnect()
+            Combat.SilentAimConnection = nil
+        end
     end
 end
 
+-- Trigger Bot
 function Combat:UpdateTriggerBot()
     if Combat.Features.TriggerBot then
-        -- Server-approved trigger bot
+        if not Combat.TriggerBotConnection then
+            Combat.TriggerBotConnection = Combat.RunService.RenderStepped:Connect(function()
+                local mouse = Combat.Players.LocalPlayer:GetMouse()
+                if mouse.Target and mouse.Target.Parent then
+                    local humanoid = mouse.Target.Parent:FindFirstChildOfClass("Humanoid")
+                    local player = Combat.Players:GetPlayerFromCharacter(mouse.Target.Parent)
+                    if humanoid and humanoid.Health > 0 and player and player ~= Combat.Players.LocalPlayer then
+                        if not Combat.Features.WallCheck or Combat:CanSee(mouse.Target) then
+                            task.wait(Combat.Features.TriggerDelay)
+                            mouse1click()
+                        end
+                    end
+                end
+            end)
+        end
     else
-        -- Disable
+        if Combat.TriggerBotConnection then
+            Combat.TriggerBotConnection:Disconnect()
+            Combat.TriggerBotConnection = nil
+        end
     end
 end
 
+-- Aimlock
 function Combat:UpdateAimlock()
     if Combat.Features.Aimlock then
-        -- Server-approved aimlock
+        if not Combat.AimlockConnection then
+            Combat.AimlockConnection = Combat.RunService.RenderStepped:Connect(function()
+                if Combat.Features.AimlockActive then
+                    local target = Combat:GetClosestPlayer(Combat.Features.AimFOV, Combat.Features.AimPart, Combat.Features.WallCheck)
+                    if target and target.Character then
+                        local part = target.Character:FindFirstChild(Combat.Features.AimPart) or target.Character:FindFirstChild("Head")
+                        if part then
+                            local targetCFrame = CFrame.new(Combat.Camera.CFrame.Position, part.Position)
+                            local smoothness = Combat.Features.AimlockSmoothness
+                            Combat.Camera.CFrame = Combat.Camera.CFrame:Lerp(targetCFrame, smoothness)
+                        end
+                    end
+                end
+            end)
+        end
     else
-        -- Disable
+        if Combat.AimlockConnection then
+            Combat.AimlockConnection:Disconnect()
+            Combat.AimlockConnection = nil
+        end
+        Combat.Features.AimlockActive = false
     end
+end
+
+-- Rapid Fire
+function Combat:UpdateRapidFire()
+    if Combat.Features.RapidFire then
+        if not Combat.RapidFireConnection then
+            Combat.RapidFireConnection = Combat.RunService.Heartbeat:Connect(function()
+                local tool = Combat.Players.LocalPlayer.Character and Combat.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                if tool and tool:FindFirstChild("FireRate") then
+                    tool.FireRate.Value = (tool.FireRate.Value or 1) / Combat.Features.FireRate
+                end
+            end)
+        end
+    else
+        if Combat.RapidFireConnection then
+            Combat.RapidFireConnection:Disconnect()
+            Combat.RapidFireConnection = nil
+        end
+    end
+end
+
+-- ESP
+function Combat:UpdateESP()
+    if Combat.Features.BoxESP or Combat.Features.NameESP or Combat.Features.HealthESP or Combat.Features.TracerESP then
+        if not Combat.ESPConnection then
+            Combat.ESPConnection = Combat.RunService.RenderStepped:Connect(function()
+                Combat:ClearESP()
+                local localPlayer = Combat.Players.LocalPlayer
+                for _, player in ipairs(Combat.Players:GetPlayers()) do
+                    if player ~= localPlayer and player.Character then
+                        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                        local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                        if humanoid and humanoid.Health > 0 and hrp then
+                            if not Combat.Features.TeamESP and player.Team == localPlayer.Team then
+                                continue
+                            end
+                            local screenPos, onScreen = Combat.Camera:WorldToViewportPoint(hrp.Position)
+                            if onScreen then
+                                if Combat.Features.BoxESP then Combat:DrawBox(player, screenPos, humanoid) end
+                                if Combat.Features.NameESP then Combat:DrawName(player, screenPos) end
+                                if Combat.Features.HealthESP then Combat:DrawHealth(player, screenPos, humanoid) end
+                                if Combat.Features.TracerESP then Combat:DrawTracer(screenPos) end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    else
+        if Combat.ESPConnection then
+            Combat.ESPConnection:Disconnect()
+            Combat.ESPConnection = nil
+        end
+        Combat:ClearESP()
+    end
+end
+
+function Combat:DrawBox(player, screenPos, humanoid)
+    local box = Drawing.new("Square")
+    box.Size = Vector2.new(50, 80)
+    box.Position = Vector2.new(screenPos.X - 25, screenPos.Y - 40)
+    box.Color = Color3.fromRGB(255, 0, 0)
+    box.Thickness = 1
+    box.Filled = false
+    box.Visible = true
+    table.insert(Combat.ESPObjects, box)
+end
+
+function Combat:DrawName(player, screenPos)
+    local text = Drawing.new("Text")
+    text.Text = player.Name
+    text.Position = Vector2.new(screenPos.X, screenPos.Y - 50)
+    text.Size = 14
+    text.Color = Color3.fromRGB(255, 255, 255)
+    text.Center = true
+    text.Outline = true
+    text.Visible = true
+    table.insert(Combat.ESPObjects, text)
+end
+
+function Combat:DrawHealth(player, screenPos, humanoid)
+    local bar = Drawing.new("Square")
+    bar.Size = Vector2.new(4, 40 * (humanoid.Health / humanoid.MaxHealth))
+    bar.Position = Vector2.new(screenPos.X - 35, screenPos.Y - 20)
+    bar.Color = Color3.fromRGB(0, 255, 0):lerp(Color3.fromRGB(255, 0, 0), 1 - (humanoid.Health / humanoid.MaxHealth))
+    bar.Filled = true
+    bar.Visible = true
+    table.insert(Combat.ESPObjects, bar)
+end
+
+function Combat:DrawTracer(screenPos)
+    local line = Drawing.new("Line")
+    line.From = Vector2.new(Combat.Camera.ViewportSize.X / 2, Combat.Camera.ViewportSize.Y)
+    line.To = Vector2.new(screenPos.X, screenPos.Y)
+    line.Color = Color3.fromRGB(255, 0, 0)
+    line.Thickness = 1
+    line.Visible = true
+    table.insert(Combat.ESPObjects, line)
+end
+
+function Combat:ClearESP()
+    for _, obj in ipairs(Combat.ESPObjects) do
+        if obj then obj:Remove() end
+    end
+    Combat.ESPObjects = {}
 end
 
 function Combat:GetClosestPlayer(FOV, Part, WallCheck)
-    local LocalPlayer = Combat.Players.LocalPlayer
-    local Camera = workspace.CurrentCamera
-    local MousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local localPlayer = Combat.Players.LocalPlayer
+    local mousePos = Vector2.new(Combat.Camera.ViewportSize.X / 2, Combat.Camera.ViewportSize.Y / 2)
+    local closest = nil
+    local closestDist = FOV or math.huge
 
-    local Closest = nil
-    local ClosestDist = FOV or math.huge
-
-    for _, Player in ipairs(Combat.Players:GetPlayers()) do
-        if Player ~= LocalPlayer and Player.Character then
-            local Humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
-            local TargetPart = Player.Character:FindFirstChild(Part or "Head")
-
-            if Humanoid and Humanoid.Health > 0 and TargetPart then
-                local ScreenPos, OnScreen = Camera:WorldToViewportPoint(TargetPart.Position)
-
-                if OnScreen then
-                    local Dist = (Vector2.new(ScreenPos.X, ScreenPos.Y) - MousePos).Magnitude
-
-                    if Dist < ClosestDist then
-                        if not WallCheck or Combat:CanSee(TargetPart) then
-                            Closest = Player
-                            ClosestDist = Dist
+    for _, player in ipairs(Combat.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            local targetPart = player.Character:FindFirstChild(Part or "Head")
+            if humanoid and humanoid.Health > 0 and targetPart then
+                local screenPos, onScreen = Combat.Camera:WorldToViewportPoint(targetPart.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    if dist < closestDist then
+                        if not WallCheck or Combat:CanSee(targetPart) then
+                            closest = player
+                            closestDist = dist
                         end
                     end
                 end
             end
         end
     end
-
-    return Closest
+    return closest
 end
 
 function Combat:CanSee(Part)
-    local Camera = workspace.CurrentCamera
-    local Origin = Camera.CFrame.Position
-    local Direction = (Part.Position - Origin).Unit * (Part.Position - Origin).Magnitude
-
-    local RaycastParams = RaycastParams.new()
-    RaycastParams.FilterDescendantsInstances = {Combat.Players.LocalPlayer.Character}
-    RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
-    local Result = workspace:Raycast(Origin, Direction, RaycastParams)
-
-    if Result then
-        return Result.Instance:IsDescendantOf(Part.Parent)
+    local origin = Combat.Camera.CFrame.Position
+    local direction = (Part.Position - origin)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {Combat.Players.LocalPlayer.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    if result then
+        return result.Instance:IsDescendantOf(Part.Parent)
     end
-
     return true
 end
 
 function Combat:Cleanup()
-    for _, Connection in ipairs(Combat.Connections) do
-        Connection:Disconnect()
-    end
-    Combat.Connections = {}
+    if Combat.SilentAimConnection then Combat.SilentAimConnection:Disconnect() end
+    if Combat.TriggerBotConnection then Combat.TriggerBotConnection:Disconnect() end
+    if Combat.AimlockConnection then Combat.AimlockConnection:Disconnect() end
+    if Combat.RapidFireConnection then Combat.RapidFireConnection:Disconnect() end
+    if Combat.ESPConnection then Combat.ESPConnection:Disconnect() end
+    Combat:ClearESP()
 end
 
 return Combat
