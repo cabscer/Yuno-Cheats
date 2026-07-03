@@ -1,0 +1,6 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/cabscer/Yuno-Cheats/main/loader.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/cabscer/Yuno-Cheats/main/loader.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/cabscer/Yuno-Cheats/main/loader.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/cabscer/Yuno-Cheats/main/loader.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/cabscer/Yuno-Cheats/main/loader.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/cabscer/Yuno-Cheats/main/loader.lua"))()
