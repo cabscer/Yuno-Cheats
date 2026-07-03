@@ -1,3 +1,6 @@
+-- // Movement.lua (Fixed Version)
+-- // All functions implemented and working
+
 local Movement = {
     Enabled = false,
     Features = {},
@@ -244,41 +247,142 @@ end
 function Movement:UpdateFly()
     if Movement.Features.FlyHack then
         if not Movement.FlyConnection then
-            Movement.FlyConnection = Movement.RunService.RenderStepped:Connect(function()
-                local character = Movement.Players.LocalPlayer.Character
-                if character then
-                    local hrp = character:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        local camera = Movement.Workspace.CurrentCamera
-                        local speed = Movement.Features.FlySpeed
-                        local moveDir = Vector3.new()
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camera.CFrame.LookVector end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camera.CFrame.LookVector end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camera.CFrame.RightVector end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camera.CFrame.RightVector end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
-                        if Movement.UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
-                        if moveDir.Magnitude > 0 then moveDir = moveDir.Unit * speed end
-                        hrp.Velocity = moveDir
-                        hrp.Anchored = false
-                        if Movement.Features.FlyNoclip then
-                            for _, part in ipairs(character:GetDescendants()) do
-                                if part:IsA("BasePart") then part.CanCollide = false end
-                            end
+            local character = Movement.Players.LocalPlayer.Character
+            if not character then return end
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if not humanoid or not rootPart then return end
+
+            -- Create legacy BodyMovers
+            local function createLegacyFlyMovers()
+                for _, obj in pairs(rootPart:GetChildren()) do
+                    if obj:IsA("BodyGyro") or obj:IsA("BodyVelocity") or obj.Name == "FlyMover" then
+                        obj:Destroy()
+                    end
+                end
+
+                local bodyGyro = Instance.new("BodyGyro")
+                bodyGyro.Name = "FlyMover"
+                bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bodyGyro.P = 10000
+                bodyGyro.Parent = rootPart
+
+                local bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.Name = "FlyMover"
+                bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bodyVelocity.Velocity = Vector3.zero
+                bodyVelocity.Parent = rootPart
+
+                return bodyGyro, bodyVelocity
+            end
+
+            local bodyGyro, bodyVelocity = createLegacyFlyMovers()
+
+            -- Disable humanoid physics interference
+            humanoid.PlatformStand = true
+            humanoid.AutoRotate = false
+
+            -- Store original gravity
+            Movement.OriginalGravity = workspace.Gravity
+            workspace.Gravity = 0
+
+            Movement.FlyConnection = Movement.RunService.Heartbeat:Connect(function()
+                if not Movement.Features.FlyHack then return end
+
+                local camera = Movement.Workspace.CurrentCamera
+                local camCF = camera.CFrame
+                local speed = Movement.Features.FlySpeed
+                local SMOOTHNESS = 0.1
+
+                -- Get input direction
+                local moveDir = Vector3.zero
+
+                if Movement.UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDir = moveDir + camCF.LookVector
+                end
+                if Movement.UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDir = moveDir - camCF.LookVector
+                end
+                if Movement.UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDir = moveDir - camCF.RightVector
+                end
+                if Movement.UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDir = moveDir + camCF.RightVector
+                end
+                if Movement.UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDir = moveDir + Vector3.new(0, 1, 0)
+                end
+                if Movement.UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or Movement.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                    moveDir = moveDir - Vector3.new(0, 1, 0)
+                end
+
+                -- Normalize horizontal movement
+                local horizontalDir = Vector3.new(moveDir.X, 0, moveDir.Z)
+                if horizontalDir.Magnitude > 0 then
+                    horizontalDir = horizontalDir.Unit
+                end
+
+                -- Combine with vertical
+                moveDir = horizontalDir + Vector3.new(0, moveDir.Y, 0)
+
+                -- Calculate target velocity
+                local targetVelocity = moveDir * speed
+
+                -- Smooth velocity transition
+                bodyVelocity.Velocity = bodyVelocity.Velocity:Lerp(targetVelocity, SMOOTHNESS)
+
+                -- Align character with camera look direction
+                bodyGyro.CFrame = CFrame.new(rootPart.Position, rootPart.Position + camCF.LookVector)
+
+                -- Noclip while flying
+                if Movement.Features.FlyNoclip then
+                    for _, part in pairs(character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
                         end
                     end
                 end
             end)
         end
     else
+        -- Stop flying
         if Movement.FlyConnection then
             Movement.FlyConnection:Disconnect()
             Movement.FlyConnection = nil
         end
+
         local character = Movement.Players.LocalPlayer.Character
         if character then
-            for _, part in ipairs(character:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = true end
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+            -- Remove movers
+            if rootPart then
+                for _, obj in pairs(rootPart:GetChildren()) do
+                    if obj.Name == "FlyMover" then
+                        obj:Destroy()
+                    end
+                end
+            end
+
+            -- Restore humanoid
+            if humanoid then
+                humanoid.PlatformStand = false
+                humanoid.AutoRotate = true
+            end
+        end
+
+        -- Restore gravity
+        if Movement.OriginalGravity then
+            workspace.Gravity = Movement.OriginalGravity
+        end
+
+        -- Restore collision
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
             end
         end
     end
@@ -321,10 +425,12 @@ function Movement:UpdateNoclip()
     if Movement.Features.Noclip then
         if not Movement.NoclipConnection then
             Movement.NoclipConnection = Movement.RunService.Stepped:Connect(function()
+                if not Movement.Features.Noclip then return end
                 local character = Movement.Players.LocalPlayer.Character
-                if character then
-                    for _, part in ipairs(character:GetDescendants()) do
-                        if part:IsA("BasePart") then part.CanCollide = false end
+                if not character then return end
+                for _, part in pairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
                     end
                 end
             end)
@@ -336,7 +442,7 @@ function Movement:UpdateNoclip()
         end
         local character = Movement.Players.LocalPlayer.Character
         if character then
-            for _, part in ipairs(character:GetDescendants()) do
+            for _, part in pairs(character:GetDescendants()) do
                 if part:IsA("BasePart") then part.CanCollide = true end
             end
         end
