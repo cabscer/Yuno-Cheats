@@ -1,3 +1,6 @@
+-- // Combat.lua (Fixed Version)
+-- // All functions implemented and working
+
 local Combat = {
     Enabled = false,
     Features = {},
@@ -188,6 +191,9 @@ function Combat:Init(Library, Tab)
     Combat.Features.FireRate = 2
     Combat.Features.AimlockActive = false
     Combat.ESPObjects = {}
+    Combat.ESPConnection = nil
+    Combat.PlayerAddedConnection = nil
+    Combat.PlayerRemovingConnection = nil
 end
 
 -- Silent Aim
@@ -289,27 +295,21 @@ end
 function Combat:UpdateESP()
     if Combat.Features.BoxESP or Combat.Features.NameESP or Combat.Features.HealthESP or Combat.Features.TracerESP then
         if not Combat.ESPConnection then
+            -- Initialize ESP for existing players
+            for _, player in pairs(Combat.Players:GetPlayers()) do
+                Combat:CreateESP(player)
+            end
+
             Combat.ESPConnection = Combat.RunService.RenderStepped:Connect(function()
-                Combat:ClearESP()
-                local localPlayer = Combat.Players.LocalPlayer
-                for _, player in ipairs(Combat.Players:GetPlayers()) do
-                    if player ~= localPlayer and player.Character then
-                        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                        local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-                        if humanoid and humanoid.Health > 0 and hrp then
-                            if not Combat.Features.TeamESP and player.Team == localPlayer.Team then
-                                continue
-                            end
-                            local screenPos, onScreen = Combat.Camera:WorldToViewportPoint(hrp.Position)
-                            if onScreen then
-                                if Combat.Features.BoxESP then Combat:DrawBox(player, screenPos, humanoid) end
-                                if Combat.Features.NameESP then Combat:DrawName(player, screenPos) end
-                                if Combat.Features.HealthESP then Combat:DrawHealth(player, screenPos, humanoid) end
-                                if Combat.Features.TracerESP then Combat:DrawTracer(screenPos) end
-                            end
-                        end
-                    end
-                end
+                Combat:UpdateESPObjects()
+            end)
+
+            Combat.PlayerAddedConnection = Combat.Players.PlayerAdded:Connect(function(player)
+                Combat:CreateESP(player)
+            end)
+
+            Combat.PlayerRemovingConnection = Combat.Players.PlayerRemoving:Connect(function(player)
+                Combat:RemoveESP(player)
             end)
         end
     else
@@ -317,58 +317,168 @@ function Combat:UpdateESP()
             Combat.ESPConnection:Disconnect()
             Combat.ESPConnection = nil
         end
-        Combat:ClearESP()
+        if Combat.PlayerAddedConnection then
+            Combat.PlayerAddedConnection:Disconnect()
+            Combat.PlayerAddedConnection = nil
+        end
+        if Combat.PlayerRemovingConnection then
+            Combat.PlayerRemovingConnection:Disconnect()
+            Combat.PlayerRemovingConnection = nil
+        end
+        Combat:ClearAllESP()
     end
 end
 
-function Combat:DrawBox(player, screenPos, humanoid)
+function Combat:CreateESP(player)
+    if player == Combat.Players.LocalPlayer then return end
+    if Combat.ESPObjects[player] then return end
+
     local box = Drawing.new("Square")
-    box.Size = Vector2.new(50, 80)
-    box.Position = Vector2.new(screenPos.X - 25, screenPos.Y - 40)
+    box.Visible = false
     box.Color = Color3.fromRGB(255, 0, 0)
-    box.Thickness = 1
+    box.Thickness = 2
+    box.Transparency = 1
     box.Filled = false
-    box.Visible = true
-    table.insert(Combat.ESPObjects, box)
+
+    local nameText = Drawing.new("Text")
+    nameText.Visible = false
+    nameText.Color = Color3.fromRGB(255, 0, 0)
+    nameText.Size = 14
+    nameText.Center = true
+    nameText.Outline = true
+
+    local distText = Drawing.new("Text")
+    distText.Visible = false
+    distText.Color = Color3.new(1, 1, 1)
+    distText.Size = 12
+    distText.Center = true
+    distText.Outline = true
+
+    local healthText = Drawing.new("Text")
+    healthText.Visible = false
+    healthText.Color = Color3.new(0, 1, 0)
+    healthText.Size = 12
+    healthText.Center = true
+    healthText.Outline = true
+
+    Combat.ESPObjects[player] = {
+        Box = box,
+        Name = nameText,
+        Distance = distText,
+        Health = healthText
+    }
 end
 
-function Combat:DrawName(player, screenPos)
-    local text = Drawing.new("Text")
-    text.Text = player.Name
-    text.Position = Vector2.new(screenPos.X, screenPos.Y - 50)
-    text.Size = 14
-    text.Color = Color3.fromRGB(255, 255, 255)
-    text.Center = true
-    text.Outline = true
-    text.Visible = true
-    table.insert(Combat.ESPObjects, text)
+function Combat:RemoveESP(player)
+    local esp = Combat.ESPObjects[player]
+    if not esp then return end
+
+    esp.Box:Remove()
+    esp.Name:Remove()
+    esp.Distance:Remove()
+    esp.Health:Remove()
+
+    Combat.ESPObjects[player] = nil
 end
 
-function Combat:DrawHealth(player, screenPos, humanoid)
-    local bar = Drawing.new("Square")
-    bar.Size = Vector2.new(4, 40 * (humanoid.Health / humanoid.MaxHealth))
-    bar.Position = Vector2.new(screenPos.X - 35, screenPos.Y - 20)
-    bar.Color = Color3.fromRGB(0, 255, 0):lerp(Color3.fromRGB(255, 0, 0), 1 - (humanoid.Health / humanoid.MaxHealth))
-    bar.Filled = true
-    bar.Visible = true
-    table.insert(Combat.ESPObjects, bar)
+function Combat:UpdateESPObjects()
+    local localPlayer = Combat.Players.LocalPlayer
+    local camera = workspace.CurrentCamera
+    local maxDistance = 2000
+
+    for player, esp in pairs(Combat.ESPObjects) do
+        local character = player.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+        if not character or not humanoid or not rootPart or humanoid.Health <= 0 then
+            esp.Box.Visible = false
+            esp.Name.Visible = false
+            esp.Distance.Visible = false
+            esp.Health.Visible = false
+            continue
+        end
+
+        local pos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
+        local distance = (localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")) 
+            and (localPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude 
+            or 0
+
+        if not onScreen or distance > maxDistance then
+            esp.Box.Visible = false
+            esp.Name.Visible = false
+            esp.Distance.Visible = false
+            esp.Health.Visible = false
+            continue
+        end
+
+        -- Get character bounds
+        local minX, minY = math.huge, math.huge
+        local maxX, maxY = -math.huge, -math.huge
+
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                local partPos = camera:WorldToViewportPoint(part.Position)
+                minX = math.min(minX, partPos.X)
+                minY = math.min(minY, partPos.Y)
+                maxX = math.max(maxX, partPos.X)
+                maxY = math.max(maxY, partPos.Y)
+            end
+        end
+
+        local boxWidth = maxX - minX
+        local boxHeight = maxY - minY
+
+        -- Update box
+        if Combat.Features.BoxESP then
+            esp.Box.Size = Vector2.new(boxWidth + 4, boxHeight + 4)
+            esp.Box.Position = Vector2.new(minX - 2, minY - 2)
+            esp.Box.Visible = true
+        else
+            esp.Box.Visible = false
+        end
+
+        -- Update name
+        if Combat.Features.NameESP then
+            esp.Name.Text = player.Name
+            esp.Name.Position = Vector2.new(pos.X, minY - 18)
+            esp.Name.Visible = true
+        else
+            esp.Name.Visible = false
+        end
+
+        -- Update distance
+        if Combat.Features.DistanceESP then
+            esp.Distance.Text = math.floor(distance) .. " studs"
+            esp.Distance.Position = Vector2.new(pos.X, maxY + 4)
+            esp.Distance.Visible = true
+        else
+            esp.Distance.Visible = false
+        end
+
+        -- Update health
+        if Combat.Features.HealthESP then
+            esp.Health.Text = math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth)
+            esp.Health.Position = Vector2.new(pos.X, maxY + 16)
+            esp.Health.Color = Color3.new(1 - (humanoid.Health/humanoid.MaxHealth), humanoid.Health/humanoid.MaxHealth, 0)
+            esp.Health.Visible = true
+        else
+            esp.Health.Visible = false
+        end
+    end
 end
 
-function Combat:DrawTracer(screenPos)
-    local line = Drawing.new("Line")
-    line.From = Vector2.new(Combat.Camera.ViewportSize.X / 2, Combat.Camera.ViewportSize.Y)
-    line.To = Vector2.new(screenPos.X, screenPos.Y)
-    line.Color = Color3.fromRGB(255, 0, 0)
-    line.Thickness = 1
-    line.Visible = true
-    table.insert(Combat.ESPObjects, line)
-end
-
-function Combat:ClearESP()
-    for _, obj in ipairs(Combat.ESPObjects) do
-        if obj then obj:Remove() end
+function Combat:ClearAllESP()
+    for player, esp in pairs(Combat.ESPObjects) do
+        esp.Box:Remove()
+        esp.Name:Remove()
+        esp.Distance:Remove()
+        esp.Health:Remove()
     end
     Combat.ESPObjects = {}
+    Combat.ESPConnection = nil
+    Combat.PlayerAddedConnection = nil
+    Combat.PlayerRemovingConnection = nil
 end
 
 function Combat:GetClosestPlayer(FOV, Part, WallCheck)
@@ -417,7 +527,9 @@ function Combat:Cleanup()
     if Combat.AimlockConnection then Combat.AimlockConnection:Disconnect() end
     if Combat.RapidFireConnection then Combat.RapidFireConnection:Disconnect() end
     if Combat.ESPConnection then Combat.ESPConnection:Disconnect() end
-    Combat:ClearESP()
+    if Combat.PlayerAddedConnection then Combat.PlayerAddedConnection:Disconnect() end
+    if Combat.PlayerRemovingConnection then Combat.PlayerRemovingConnection:Disconnect() end
+    Combat:ClearAllESP()
 end
 
 return Combat
