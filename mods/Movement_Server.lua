@@ -25,7 +25,7 @@ function Movement:Init(Library, Tab)
         Text = "Speed Multiplier",
         Default = 2,
         Min = 1,
-        Max = 10,
+        Max = 100,
         Rounding = 1,
         Callback = function(Value)
             Movement.Features.SpeedValue = Value
@@ -212,7 +212,9 @@ function Movement:UpdateSpeed()
                         )
                         if moveDir.Magnitude > 0 then
                             moveDir = moveDir.Unit
-                            hrp.Velocity = Vector3.new(moveDir.X * humanoid.WalkSpeed * speed, hrp.Velocity.Y, moveDir.Z * humanoid.WalkSpeed * speed)
+                            -- Set HumanoidRootPart CFrame directly for better control
+                            local newCFrame = hrp.CFrame + Vector3.new(moveDir.X * speed, 0, moveDir.Z * speed)
+                            hrp.CFrame = CFrame.new(newCFrame.Position, newCFrame.Position + hrp.CFrame.LookVector)
                         end
                     end
                 end
