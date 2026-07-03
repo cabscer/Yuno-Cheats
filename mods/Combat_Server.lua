@@ -1,6 +1,3 @@
--- // Combat.lua (Fixed Version)
--- // All functions implemented and working
-
 local Combat = {
     Enabled = false,
     Features = {},
