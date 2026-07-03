@@ -5,43 +5,7 @@ local Utility = {
     RunService = game:GetService("RunService"),
     Players = game:GetService("Players"),
     Workspace = workspace,
-    ReplicatedStorage = game:GetService("ReplicatedStorage"),
 }
-
--- Get server remotes
-local Remotes = Utility.ReplicatedStorage:WaitForChild("CheatRemotes", 5)
-local ActionRequest = Remotes and Remotes:WaitForChild("ActionRequest")
-
-function Utility:RequestCheat(feature, value, callback)
-    if not ActionRequest then
-        if callback then callback(true, value) end
-        return true
-    end
-
-    local requestData = {
-        action = "cheat",
-        feature = feature,
-        value = value,
-        timestamp = tick(),
-    }
-
-    local success, result = pcall(function()
-        return ActionRequest:InvokeServer(requestData)
-    end)
-
-    if not success then
-        if callback then callback(false, result) end
-        return false
-    end
-
-    if not result.success then
-        if callback then callback(false, result.error) end
-        return false
-    end
-
-    if callback then callback(true, value) end
-    return true
-end
 
 function Utility:Init(Library, Tab)
     -- Player
@@ -51,12 +15,8 @@ function Utility:Init(Library, Tab)
         Text = "God Mode",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("GodMode", Value, function(success)
-                if success then
-                    Utility.Features.GodMode = Value
-                    Utility:UpdateGodMode()
-                end
-            end)
+            Utility.Features.GodMode = Value
+            Utility:UpdateGodMode()
         end,
     })
 
@@ -64,11 +24,7 @@ function Utility:Init(Library, Tab)
         Text = "Auto Heal",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("AutoHeal", Value, function(success)
-                if success then
-                    Utility.Features.AutoHeal = Value
-                end
-            end)
+            Utility.Features.AutoHeal = Value
         end,
     })
 
@@ -79,11 +35,7 @@ function Utility:Init(Library, Tab)
         Max = 100,
         Rounding = 0,
         Callback = function(Value)
-            Utility:RequestCheat("HealThreshold", Value, function(success)
-                if success then
-                    Utility.Features.HealThreshold = Value
-                end
-            end)
+            Utility.Features.HealThreshold = Value
         end,
     })
 
@@ -91,11 +43,7 @@ function Utility:Init(Library, Tab)
         Text = "Anti Ragdoll",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("AntiRagdoll", Value, function(success)
-                if success then
-                    Utility.Features.AntiRagdoll = Value
-                end
-            end)
+            Utility.Features.AntiRagdoll = Value
         end,
     })
 
@@ -105,11 +53,8 @@ function Utility:Init(Library, Tab)
     ToolsGroupbox:AddButton({
         Text = "Get All Tools",
         Callback = function()
-            Utility:RequestCheat("GetAllTools", true, function(success)
-                if success then
-                    Utility:GetAllTools()
-                end
-            end)
+            Utility:GetAllTools()
+            Library:Notify("Got all tools!", 2)
         end,
     })
 
@@ -117,11 +62,7 @@ function Utility:Init(Library, Tab)
         Text = "Auto Equip Best",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("AutoEquip", Value, function(success)
-                if success then
-                    Utility.Features.AutoEquip = Value
-                end
-            end)
+            Utility.Features.AutoEquip = Value
         end,
     })
 
@@ -129,11 +70,7 @@ function Utility:Init(Library, Tab)
         Text = "Infinite Ammo",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("InfiniteAmmo", Value, function(success)
-                if success then
-                    Utility.Features.InfiniteAmmo = Value
-                end
-            end)
+            Utility.Features.InfiniteAmmo = Value
         end,
     })
 
@@ -141,11 +78,7 @@ function Utility:Init(Library, Tab)
         Text = "Rapid Fire",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("RapidFireUtility", Value, function(success)
-                if success then
-                    Utility.Features.RapidFireUtility = Value
-                end
-            end)
+            Utility.Features.RapidFireUtility = Value
         end,
     })
 
@@ -155,11 +88,8 @@ function Utility:Init(Library, Tab)
     TPGGroupbox:AddButton({
         Text = "Teleport to Cursor",
         Callback = function()
-            Utility:RequestCheat("TeleportCursor", true, function(success)
-                if success then
-                    Utility:TeleportToCursor()
-                end
-            end)
+            Utility:TeleportToCursor()
+            Library:Notify("Teleported!", 2)
         end,
     })
 
@@ -174,22 +104,19 @@ function Utility:Init(Library, Tab)
     TPGGroupbox:AddButton({
         Text = "Teleport to Player",
         Callback = function()
-            Utility:RequestCheat("TeleportPlayer", Utility.Features.TPPlayer, function(success)
-                if success then
-                    Utility:TeleportToPlayer(Utility.Features.TPPlayer)
-                end
-            end)
+            if Utility.Features.TPPlayer and Utility.Features.TPPlayer ~= "" then
+                Utility:TeleportToPlayer(Utility.Features.TPPlayer)
+            else
+                Library:Notify("Enter a player name!", 2)
+            end
         end,
     })
 
     TPGGroupbox:AddButton({
         Text = "Teleport to Spawn",
         Callback = function()
-            Utility:RequestCheat("TeleportSpawn", true, function(success)
-                if success then
-                    Utility:TeleportToSpawn()
-                end
-            end)
+            Utility:TeleportToSpawn()
+            Library:Notify("Teleported to spawn!", 2)
         end,
     })
 
@@ -199,22 +126,14 @@ function Utility:Init(Library, Tab)
     ServerGroupbox:AddButton({
         Text = "Rejoin Server",
         Callback = function()
-            Utility:RequestCheat("RejoinServer", true, function(success)
-                if success then
-                    Utility:RejoinServer()
-                end
-            end)
+            Utility:RejoinServer()
         end,
     })
 
     ServerGroupbox:AddButton({
         Text = "Server Hop",
         Callback = function()
-            Utility:RequestCheat("ServerHop", true, function(success)
-                if success then
-                    Utility:ServerHop()
-                end
-            end)
+            Utility:ServerHop()
         end,
     })
 
@@ -222,6 +141,7 @@ function Utility:Init(Library, Tab)
         Text = "Copy JobId",
         Callback = function()
             Utility:CopyJobId()
+            Library:Notify("JobId copied!", 2)
         end,
     })
 
@@ -229,11 +149,7 @@ function Utility:Init(Library, Tab)
         Text = "Auto Rejoin",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("AutoRejoin", Value, function(success)
-                if success then
-                    Utility.Features.AutoRejoin = Value
-                end
-            end)
+            Utility.Features.AutoRejoin = Value
         end,
     })
 
@@ -244,12 +160,8 @@ function Utility:Init(Library, Tab)
         Text = "Click Teleport",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("ClickTP", Value, function(success)
-                if success then
-                    Utility.Features.ClickTP = Value
-                    Utility:UpdateClickTP()
-                end
-            end)
+            Utility.Features.ClickTP = Value
+            Utility:UpdateClickTP()
         end,
     })
 
@@ -258,11 +170,7 @@ function Utility:Init(Library, Tab)
         Default = "T",
         Callback = function(Value, Pressed)
             if Pressed and Utility.Features.ClickTP then
-                Utility:RequestCheat("ClickTeleport", true, function(success)
-                    if success then
-                        Utility:ClickTeleport()
-                    end
-                end)
+                Utility:ClickTeleport()
             end
         end,
     })
@@ -271,11 +179,7 @@ function Utility:Init(Library, Tab)
         Text = "Auto Farm",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("AutoFarm", Value, function(success)
-                if success then
-                    Utility.Features.AutoFarm = Value
-                end
-            end)
+            Utility.Features.AutoFarm = Value
         end,
     })
 
@@ -283,11 +187,7 @@ function Utility:Init(Library, Tab)
         Text = "Auto Collect Drops",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("AutoCollect", Value, function(success)
-                if success then
-                    Utility.Features.AutoCollect = Value
-                end
-            end)
+            Utility.Features.AutoCollect = Value
         end,
     })
 
@@ -295,12 +195,7 @@ function Utility:Init(Library, Tab)
         Text = "Free Cam",
         Default = false,
         Callback = function(Value)
-            Utility:RequestCheat("FreeCam", Value, function(success)
-                if success then
-                    Utility.Features.FreeCam = Value
-                    Utility:UpdateFreeCam()
-                end
-            end)
+            Utility.Features.FreeCam = Value
         end,
     })
 
@@ -312,12 +207,12 @@ function Utility:UpdateGodMode()
     if Utility.Features.GodMode then
         if not Utility.GodModeConnection then
             Utility.GodModeConnection = Utility.RunService.Heartbeat:Connect(function()
-                local Character = Utility.Players.LocalPlayer.Character
-                if Character then
-                    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-                    if Humanoid then
-                        Humanoid.MaxHealth = math.huge
-                        Humanoid.Health = math.huge
+                local character = Utility.Players.LocalPlayer.Character
+                if character then
+                    local humanoid = character:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        humanoid.MaxHealth = math.huge
+                        humanoid.Health = math.huge
                     end
                 end
             end)
@@ -327,103 +222,93 @@ function Utility:UpdateGodMode()
             Utility.GodModeConnection:Disconnect()
             Utility.GodModeConnection = nil
         end
-
-        local Character = Utility.Players.LocalPlayer.Character
-        if Character then
-            local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-            if Humanoid then
-                Humanoid.MaxHealth = 100
-                Humanoid.Health = 100
+        local character = Utility.Players.LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.MaxHealth = 100
+                humanoid.Health = 100
             end
         end
     end
 end
 
 function Utility:GetAllTools()
-    local Character = Utility.Players.LocalPlayer.Character
-    local Backpack = Utility.Players.LocalPlayer:FindFirstChild("Backpack")
-
-    if not Character or not Backpack then return end
-
-    for _, Tool in ipairs(Backpack:GetChildren()) do
-        if Tool:IsA("Tool") then
-            Tool.Parent = Character
+    local character = Utility.Players.LocalPlayer.Character
+    local backpack = Utility.Players.LocalPlayer:FindFirstChild("Backpack")
+    if not character or not backpack then return end
+    for _, tool in ipairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            tool.Parent = character
         end
     end
 end
 
 function Utility:TeleportToCursor()
-    local Mouse = Utility.Players.LocalPlayer:GetMouse()
-    local Character = Utility.Players.LocalPlayer.Character
-
-    if Character then
-        local HRP = Character:FindFirstChild("HumanoidRootPart")
-        if HRP then
-            HRP.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3, 0))
+    local mouse = Utility.Players.LocalPlayer:GetMouse()
+    local character = Utility.Players.LocalPlayer.Character
+    if character then
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3, 0))
         end
     end
 end
 
 function Utility:TeleportToPlayer(Name)
-    local Target = nil
-
-    for _, Player in ipairs(Utility.Players:GetPlayers()) do
-        if Player.Name:lower():find(Name:lower()) or Player.DisplayName:lower():find(Name:lower()) then
-            Target = Player
+    local target = nil
+    for _, player in ipairs(Utility.Players:GetPlayers()) do
+        if player.Name:lower():find(Name:lower()) or player.DisplayName:lower():find(Name:lower()) then
+            target = player
             break
         end
     end
-
-    if Target and Target.Character then
-        local HRP = Target.Character:FindFirstChild("HumanoidRootPart")
-        local MyHRP = Utility.Players.LocalPlayer.Character and Utility.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-
-        if HRP and MyHRP then
-            MyHRP.CFrame = HRP.CFrame + Vector3.new(0, 3, 0)
+    if target and target.Character then
+        local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+        local myHrp = Utility.Players.LocalPlayer.Character and Utility.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and myHrp then
+            myHrp.CFrame = hrp.CFrame + Vector3.new(0, 3, 0)
         end
     end
 end
 
 function Utility:TeleportToSpawn()
-    local Character = Utility.Players.LocalPlayer.Character
-    if Character then
-        local HRP = Character:FindFirstChild("HumanoidRootPart")
-        if HRP then
-            local SpawnLocations = {}
-            for _, Obj in ipairs(Utility.Workspace:GetDescendants()) do
-                if Obj:IsA("SpawnLocation") then
-                    table.insert(SpawnLocations, Obj)
+    local character = Utility.Players.LocalPlayer.Character
+    if character then
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local spawnLocations = {}
+            for _, obj in ipairs(Utility.Workspace:GetDescendants()) do
+                if obj:IsA("SpawnLocation") then
+                    table.insert(spawnLocations, obj)
                 end
             end
-
-            if #SpawnLocations > 0 then
-                HRP.CFrame = SpawnLocations[1].CFrame + Vector3.new(0, 3, 0)
+            if #spawnLocations > 0 then
+                hrp.CFrame = spawnLocations[1].CFrame + Vector3.new(0, 3, 0)
             else
-                HRP.CFrame = CFrame.new(0, 10, 0)
+                hrp.CFrame = CFrame.new(0, 10, 0)
             end
         end
     end
 end
 
 function Utility:RejoinServer()
-    local TeleportService = game:GetService("TeleportService")
-    TeleportService:Teleport(game.PlaceId, Utility.Players.LocalPlayer)
+    local teleportService = game:GetService("TeleportService")
+    teleportService:Teleport(game.PlaceId, Utility.Players.LocalPlayer)
 end
 
 function Utility:ServerHop()
-    local TeleportService = game:GetService("TeleportService")
-    local HttpService = game:GetService("HttpService")
-
-    local Success, Result = pcall(function()
+    local teleportService = game:GetService("TeleportService")
+    local httpService = game:GetService("HttpService")
+    local success, result = pcall(function()
         return game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
     end)
-
-    if Success then
-        local Data = HttpService:JSONDecode(Result)
-        if Data and Data.data then
-            for _, Server in ipairs(Data.data) do
-                if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
-                    TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, Utility.Players.LocalPlayer)
+    if success then
+        local data = httpService:JSONDecode(result)
+        if data and data.data then
+            for _, server in ipairs(data.data) do
+                if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                    teleportService:TeleportToPlaceInstance(game.PlaceId, server.id, Utility.Players.LocalPlayer)
                     break
                 end
             end
@@ -432,9 +317,9 @@ function Utility:ServerHop()
 end
 
 function Utility:CopyJobId()
-    local JobId = game.JobId
+    local jobId = game.JobId
     if setclipboard then
-        setclipboard(JobId)
+        setclipboard(jobId)
     end
 end
 
@@ -443,11 +328,7 @@ function Utility:UpdateClickTP()
         if not Utility.ClickTPConnection then
             Utility.ClickTPConnection = Utility.Players.LocalPlayer:GetMouse().Button1Down:Connect(function()
                 if Utility.Features.ClickTP then
-                    Utility:RequestCheat("ClickTeleport", true, function(success)
-                        if success then
-                            Utility:ClickTeleport()
-                        end
-                    end)
+                    Utility:ClickTeleport()
                 end
             end)
         end
@@ -460,25 +341,19 @@ function Utility:UpdateClickTP()
 end
 
 function Utility:ClickTeleport()
-    local Mouse = Utility.Players.LocalPlayer:GetMouse()
-    local Character = Utility.Players.LocalPlayer.Character
-
-    if Character then
-        local HRP = Character:FindFirstChild("HumanoidRootPart")
-        if HRP then
-            HRP.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3, 0))
+    local mouse = Utility.Players.LocalPlayer:GetMouse()
+    local character = Utility.Players.LocalPlayer.Character
+    if character then
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3, 0))
         end
     end
-end
-
-function Utility:UpdateFreeCam()
-    -- Placeholder
 end
 
 function Utility:Cleanup()
     if Utility.GodModeConnection then Utility.GodModeConnection:Disconnect() end
     if Utility.ClickTPConnection then Utility.ClickTPConnection:Disconnect() end
-
     Utility.GodModeConnection = nil
     Utility.ClickTPConnection = nil
 end
