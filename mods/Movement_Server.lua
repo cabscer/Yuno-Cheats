@@ -205,16 +205,29 @@ function Movement:UpdateSpeed()
                         if Movement.Features.SpeedKeybind and not Movement.Features.SpeedActive then
                             speed = 1
                         end
+
+                        -- Get camera-relative movement direction
+                        local camera = workspace.CurrentCamera
+                        local camCF = camera.CFrame
+
                         local moveDir = Vector3.new(
                             (Movement.UserInputService:IsKeyDown(Enum.KeyCode.D) and 1 or 0) - (Movement.UserInputService:IsKeyDown(Enum.KeyCode.A) and 1 or 0),
                             0,
                             (Movement.UserInputService:IsKeyDown(Enum.KeyCode.S) and 1 or 0) - (Movement.UserInputService:IsKeyDown(Enum.KeyCode.W) and 1 or 0)
                         )
+
                         if moveDir.Magnitude > 0 then
                             moveDir = moveDir.Unit
-                            -- Set HumanoidRootPart CFrame directly for better control
-                            local newCFrame = hrp.CFrame + Vector3.new(moveDir.X * speed, 0, moveDir.Z * speed)
-                            hrp.CFrame = CFrame.new(newCFrame.Position, newCFrame.Position + hrp.CFrame.LookVector)
+
+                            -- Convert to camera-relative direction
+                            local camLook = camCF.LookVector
+                            local camRight = camCF.RightVector
+                            local camMoveDir = (camRight * moveDir.X) + (camLook * moveDir.Z)
+                            camMoveDir = Vector3.new(camMoveDir.X, 0, camMoveDir.Z).Unit
+
+                            -- Apply speed to HumanoidRootPart CFrame
+                            local newPos = hrp.Position + (camMoveDir * speed)
+                            hrp.CFrame = CFrame.new(newPos, newPos + hrp.CFrame.LookVector)
                         end
                     end
                 end
